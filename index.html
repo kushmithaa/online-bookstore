@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Online Bookstore</title>
+<style>
+body{font-family:Arial;margin:0;background:#faf7f2}
+header{background:#5b3a29;color:#fff;padding:18px;text-align:center}
+.bar{max-width:1000px;margin:15px auto;padding:0 15px}
+input,select,button{padding:8px;margin:3px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;max-width:1000px;margin:auto;padding:15px}
+.card{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 4px #0003}
+.in{color:green;font-weight:bold}
+.out{color:#c0392b;font-weight:bold}
+.panel{max-width:1000px;margin:15px auto;background:#fff;padding:15px;border-radius:8px}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Online Bookstore</h1>
+    <p>Version 1.0</p>
+</header>
+
+<div class="bar">
+    <input id="q" placeholder="Search by title or author" oninput="render()">
+    <select id="cat" onchange="render()">
+        <option>All</option>
+        <option>Programming</option>
+        <option>Fiction</option>
+        <option>Science</option>
+        <option>Self-Help</option>
+    </select>
+</div>
+
+<div class="grid" id="books"></div>
+
+<div class="panel">
+    <h2>Shopping Cart</h2>
+    <div id="cart">Cart is empty</div>
+    <button onclick="placeOrder()">Place Order</button>
+</div>
+
+<div class="panel">
+    <h2>Order Status</h2>
+    <div id="status">No orders yet</div>
+</div>
+
+<script>
+const books = [
+    {t:"Clean Code",a:"Robert Martin",c:"Programming",p:550,s:true},
+    {t:"The Pragmatic Programmer",a:"Andrew Hunt",c:"Programming",p:620,s:true},
+    {t:"Wings of Fire",a:"A.P.J. Abdul Kalam",c:"Self-Help",p:299,s:true},
+    {t:"The Alchemist",a:"Paulo Coelho",c:"Fiction",p:250,s:true},
+    {t:"A Brief History of Time",a:"Stephen Hawking",c:"Science",p:399,s:false},
+    {t:"Ponniyin Selvan",a:"Kalki",c:"Fiction",p:480,s:true},
+    {t:"Atomic Habits",a:"James Clear",c:"Self-Help",p:450,s:true}
+];
+
+let cart = [], orders = [];
+
+function render() {
+    const q = document.getElementById('q').value.toLowerCase();
+    const c = document.getElementById('cat').value;
+
+    document.getElementById('books').innerHTML = books
+        .map((b,i) => ({b,i}))
+        .filter(x => (c == 'All' || x.b.c == c) &&
+            (x.b.t.toLowerCase().includes(q) ||
+             x.b.a.toLowerCase().includes(q)))
+        .map(x => `
+            <div class="card">
+                <h3>${x.b.t}</h3>
+                <p>${x.b.a}</p>
+                <p>${x.b.c}</p>
+                <p><b>Rs. ${x.b.p}</b></p>
+                <p class="${x.b.s?'in':'out'}">
+                    ${x.b.s?'In Stock':'Out of Stock'}
+                </p>
+                <button ${x.b.s?'':'disabled'} onclick="add(${x.i})">
+                    Add to Cart
+                </button>
+            </div>
+        `).join('');
+}
+
+function add(i) {
+    cart.push(books[i]);
+    showCart();
+}
+
+function showCart() {
+    document.getElementById('cart').innerHTML = cart.length
+        ? cart.map(b => b.t + ' - Rs. ' + b.p).join('<br>') +
+          '<br><b>Total: Rs. ' +
+          cart.reduce((s,b) => s+b.p,0) + '</b>'
+        : 'Cart is empty';
+}
+
+function placeOrder() {
+    if (!cart.length) return;
+
+    const id = 1000 + orders.length + 1;
+    orders.push({id,st:'Placed'});
+    cart = [];
+    showCart();
+
+    const stages = ['Placed','Packed','Shipped','Delivered'];
+    let n = 0;
+
+    const t = setInterval(() => {
+        n++;
+        orders[orders.length-1].st = stages[n];
+        showStatus();
+        if (n == 3) clearInterval(t);
+    }, 3000);
+
+    showStatus();
+}
+
+function showStatus() {
+    document.getElementById('status').innerHTML =
+        orders.map(o => 'Order #' + o.id + ': <b>' + o.st + '</b>')
+        .join('<br>');
+}
+
+render();
+</script>
+
+</body>
+</html>
